@@ -1,6 +1,6 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>도리택스 수집 현황</title>
+<title>도리택스 작업 현황</title>
 <style>
 :root{color-scheme:light dark;--bg:#fbfaf7;--fg:#1f1f1d;--mut:#6f6e69;--card:#f1efe9;--line:#dedbd2;--ok:#3b6d11;--run:#185fa5;--wait:#8a8880;--err:#a32d2d;--bar:#185fa5;--bar2:#3b6d11}
 @media(prefers-color-scheme:dark){:root{--bg:#1b1b19;--fg:#ecebe6;--mut:#a3a29c;--card:#262624;--line:#3a3a37;--ok:#97c459;--run:#85b7eb;--err:#f09595;--bar:#85b7eb;--bar2:#97c459}}
@@ -15,7 +15,7 @@ main{max-width:820px;margin:0 auto}h1{font-size:20px;font-weight:600;margin:0 0 
 .bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:8px 0 4px}.bar i{display:block;height:100%;background:var(--bar)}.bar i.done{background:var(--bar2)}
 .num{font-variant-numeric:tabular-nums}
 </style></head><body><main>
-<h1>도리택스 빠진 자료 수집</h1>
+<h1 id="h1">도리택스 작업 현황</h1>
 <div class="m" id="sub">불러오는 중…</div>
 <div class="g" id="cards"></div>
 <h2>단계별 진행</h2><div id="steps"></div>
@@ -31,10 +31,11 @@ async function load(){
  try{const r=await fetch(URL_+"?t="+Date.now(),{cache:"no-store"});const s=await r.json();
   const age=Math.round((Date.now()-new Date(s.at).getTime())/60000);
   document.getElementById("sub").textContent=`시작 ${s.started} · 사무실 PC 기준 ${s.at.replace("T"," ").slice(0,19)} (${age}분 전) · 화면 확인 ${new Date().toLocaleTimeString("ko-KR")}`;
+  if(s.title)document.getElementById("h1").textContent=s.title;
   const cls=s.state==="완료"?"ok":s.state==="진행 중"?"run":"err";
   document.getElementById("cards").innerHTML=[["상태",`<b class="${cls}">${esc(s.state)}</b>`],["지금 단계",`<b style="font-size:15px">${esc(s.step)}</b>`],
-   ["받는 속도(최근 10분)",`<b class="num">${s.rate.toFixed(1)}<span class="m"> 건/분</span></b>`],["남은 시간(추정)",`<b class="num" style="font-size:18px">${esc(s.eta)}</b>`],
-   ["DB 문서 전체",`<b class="num">${s.docs.toLocaleString()}</b>`]].map(([k,v])=>`<div class="c"><span class="m">${k}</span>${v}</div>`).join("");
+   (s.pct!=null?["진행률",`<b class="num">${s.pct.toFixed(0)}<span class="m"> %</span></b>`]:["받는 속도(최근 10분)",`<b class="num">${s.rate.toFixed(1)}<span class="m"> 건/분</span></b>`]),["남은 시간(추정)",`<b class="num" style="font-size:18px">${esc(s.eta)}</b>`],
+   ...(s.finish?[["완료 예정",`<b class="num" style="font-size:18px">${esc(s.finish)}</b>`]]:[]),["DB 문서 전체",`<b class="num">${s.docs.toLocaleString()}</b>`]].map(([k,v])=>`<div class="c"><span class="m">${k}</span>${v}</div>`).join("");
   document.getElementById("steps").innerHTML=s.stages.map(x=>`<div class="st"><div class="row"><span class="nm">${esc(x.name)}</span>${tag[x.state]}</div>${bar(x.done,x.total,x.unit)}${x.note?'<div class="m num">'+esc(x.note)+'</div>':""}</div>`).join("");
  }catch(e){document.getElementById("sub").textContent="현황을 아직 못 읽었습니다: "+e}}
 load();setInterval(load,30000);
